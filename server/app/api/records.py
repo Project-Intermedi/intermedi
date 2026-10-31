@@ -9,7 +9,7 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from app.core.config import BASE_DIR, UPLOAD_DIR
 from app.models import db
 from app.schemas.record import RecordIn
-from app.services.match import match_names
+from app.services.match import match_codes, match_names
 from app.services.ocr import run_ocr
 
 router = APIRouter()
@@ -23,7 +23,7 @@ async def analyze(file: UploadFile = File(...), source: str = Form('bag')):
         shutil.copyfileobj(file.file, f)
 
     texts, scores = run_ocr(str(path))
-    medicines = match_names(texts)
+    medicines = match_codes(texts) if source == 'prescription' else match_names(texts)
 
     return {
         'image_path': str(path.relative_to(BASE_DIR)),

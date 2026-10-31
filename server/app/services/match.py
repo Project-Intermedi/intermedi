@@ -8,10 +8,12 @@ from rapidfuzz import distance, process
 
 from app.core.config import DATA_DIR
 from app.services.dosage import extract_dosage
+from app.services.prescription import extract_items
 
 # ── 정규화 규칙 ──────────────────────────────────────────
 LEAD_SYM = re.compile(r'^[*©®※·∙:：\s]+')
 LEAD_PAREN = re.compile(r'^\([^)]*\)')
+LEAD_BRACKET = re.compile(r'^\[[^\]]*\]')
 PREFIX_MARK = re.compile(r'^[^(]{0,2}\)')
 FIRST_PAREN = re.compile(r'\(.*$', re.S)
 TAIL_JUNK = re.compile(r'[,.·;:_\s]+$')
@@ -36,6 +38,7 @@ def core(t: str) -> str:
     for w, c in TYPO.items():
         t = t.replace(w, c)
     t = LEAD_SYM.sub('', t)
+    t = LEAD_BRACKET.sub('', t)
     t = LEAD_PAREN.sub('', t)
     t = PREFIX_MARK.sub('', t)
     t = FIRST_PAREN.sub('', t)
@@ -82,6 +85,15 @@ def doses(texts) -> set:
 
 
 # ── 약가마스터 적재 (서버 켤 때 1회) ─────────────────────
+def _strip13(s):
+    """13자리 코드(880 + 제품코드 9자리 + 체크디지트) → 제품코드 9자리"""
+    s = s.str.strip()
+    ok = s.str.len().eq(13) & s.str.startswith('880')
+    out = pd.Series('', index=s.index)
+    out[ok] = s[ok].str[3:12]
+    return out
+
+
 def _load_master():
     files = sorted(DATA_DIR.glob('*.csv'))
     if not files:
@@ -99,18 +111,75 @@ def _load_master():
 
     df = df.fillna('')
     med = df[df['전문일반구분'].isin(['전문의약품', '일반의약품'])].copy()
+
     c = med['제품코드(개정후)'].str.strip()
     med['제품코드'] = c.where(c == '', c.str.zfill(9))
+    med['코드_대표복원'] = _strip13(med['대표코드'])
+    med['코드_표준복원'] = _strip13(med['표준코드'])
     med['매칭키'] = med['한글상품명'].map(core)
-    med = med[med['매칭키'] != '']
-    return med.drop_duplicates(subset=['매칭키', '약품규격'])
+
+    # 쓰는 열만 남긴다 (25만 행이라 메모리 차이가 크다)
+    return med[['한글상품명', '약품규격', '제품코드',
+                '코드_대표복원', '코드_표준복원', '매칭키']]
 
 
-CAND = _load_master()
+MED = _load_master()
+
+# 이름 매칭용 — 매칭키와 용량 조합으로 중복 제거
+CAND = MED[MED['매칭키'] != ''].drop_duplicates(subset=['매칭키', '약품규격'])
 KEYS = sorted(CAND['매칭키'].unique())
 KEY_SET = set(KEYS)
-print(f'약가마스터 적재 완료 — 매칭키 {len(KEYS):,}종 / {len(CAND):,}행')
 
+
+# 코드 조회용 3단계 — 제품코드 → 대표코드 복원 → 표준코드 복원
+def _code_index(col):
+    sub = MED[MED[col] != '']
+    return sub.drop_duplicates(col).set_index(col)['한글상품명']
+
+
+CODE_TIERS = (
+    ('코드일치', _code_index('제품코드')),
+    ('대표코드', _code_index('코드_대표복원')),
+    ('포장코드', _code_index('코드_표준복원')),
+)
+
+print(f'약가마스터 적재 완료 — 매칭키 {len(KEYS):,}종 / {len(CAND):,}행')
+print('코드 조회표 — ' + ' / '.join(f'{s} {len(t):,}종' for s, t in CODE_TIERS))
+
+
+def match_codes(texts: list[str]) -> list[dict]:
+    """처방전 — 인쇄된 제품코드를 3단계로 조회한다"""
+    out = []
+    for it in extract_items(texts):
+        code = it['product_code']
+
+        head = None
+        for stage, tbl in CODE_TIERS:
+            if code in tbl.index:
+                head = {'name': tbl.loc[code], 'product_code': code,
+                        'matched': True, 'match_stage': stage, 'distance': 0}
+                break
+
+        if head is None:
+            # 코드가 셋 다 없으면 이름으로 한 번 더 찾는다
+            fb = match_names([it['raw_text']])
+            if fb and fb[0]['matched']:
+                head = {'name': fb[0]['name'], 'product_code': fb[0]['product_code'],
+                        'matched': True, 'match_stage': '이름보완',
+                        'distance': fb[0]['distance']}
+            else:
+                head = {'name': it['raw_text'], 'product_code': None,
+                        'matched': False, 'match_stage': '코드없음', 'distance': None}
+
+        out.append({
+            **head,
+            'raw_text': it['raw_text'],
+            'dose_once': it['dose_once'],
+            'times_per_day': it['times_per_day'],
+            'total_days': it['total_days'],
+            'usage': it['usage'],
+        })
+    return out
 
 def _row_doses(r):
     return doses([r['약품규격'], r['한글상품명']])
