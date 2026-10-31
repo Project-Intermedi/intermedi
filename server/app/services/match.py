@@ -1,12 +1,13 @@
 """약가마스터 매칭 — 노트북 로직 이식"""
 import re
 import unicodedata
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from rapidfuzz import distance, process
+
 from app.core.config import DATA_DIR
+from app.services.dosage import extract_dosage
 
 # ── 정규화 규칙 ──────────────────────────────────────────
 LEAD_SYM = re.compile(r'^[*©®※·∙:：\s]+')
@@ -16,7 +17,7 @@ FIRST_PAREN = re.compile(r'\(.*$', re.S)
 TAIL_JUNK = re.compile(r'[,.·;:_\s]+$')
 DOSE_TAIL = re.compile(
     r'\s*\d+(?:\.\d+)?(?:\s*/\s*\d+(?:\.\d+)?)*\s*'
-    r'(?:밀리그램|밀리그람|일리그램|미리그램|밀리그|밀리|mg|㎎|mcg|㎍|IU|g|ml|㎖|%)?\s*$')
+    r'(?:밀리그램|밀리그람|일리그램|미리그램|밀리그|밀리|mcg|μg|µg|㎍|mg|㎎|IU|ml|㎖|g|%)?\s*$')
 
 SUFFIX = ('정', '캡슐', '캡슬', '시럽', '산', '과립', '연고', '크림', '겔', '좌제', '패치')
 NOISE = ('금액', '총액', '합계', '부담금', '영수증', '계산서', '급여', '가산',
@@ -27,10 +28,14 @@ COLOR = ('흰색', '하양', '백색', '노란색', '노랑', '분홍', '연분�
 SHAPE = ('원형', '타원형', '장방형', '삼각형', '마름모', '팔각형', '오각형', '캡슐형')
 FORM_ONLY = {'서방정', '장용정', '설하정', '필름코팅정', '당의정', '나정',
              '구강붕해정', '구강봉해정', '정제', '산제'}
+TYPO = {'캅셀': '캡슐'}
 
 
 def core(t: str) -> str:
-    t = LEAD_SYM.sub('', str(t).strip())
+    t = unicodedata.normalize('NFKC', str(t).strip())
+    for w, c in TYPO.items():
+        t = t.replace(w, c)
+    t = LEAD_SYM.sub('', t)
     t = LEAD_PAREN.sub('', t)
     t = PREFIX_MARK.sub('', t)
     t = FIRST_PAREN.sub('', t)
@@ -64,7 +69,7 @@ def is_drug(t: str) -> bool:
 # ── 용량 추출 ────────────────────────────────────────────
 DOSE_UNIT = re.compile(
     r'((?:\d+(?:\.\d+)?)(?:\s*/\s*\d+(?:\.\d+)?)*)\s*'
-    r'(?:밀리그램|밀리그람|일리그램|미리그램|밀리그|밀리|mg|㎎|mcg|㎍|IU|g|ml|㎖)')
+    r'(?:밀리그램|밀리그람|일리그램|미리그램|밀리그|밀리|mcg|μg|µg|㎍|mg|㎎|IU|ml|㎖|g)')
 NUM = re.compile(r'\d+(?:\.\d+)?')
 
 
@@ -120,6 +125,8 @@ def match_names(texts: list[str]) -> list[dict]:
     if not raw:
         return []
 
+    dose_map = extract_dosage(texts, is_drug, core)
+
     keys = sorted(raw)
     unknown = [k for k in keys if k not in KEY_SET]
     dist = None
@@ -128,9 +135,13 @@ def match_names(texts: list[str]) -> list[dict]:
                              scorer=distance.Levenshtein.distance, workers=-1)
     pos = {k: i for i, k in enumerate(unknown)}
 
+    blank = {'dose_once': None, 'times_per_day': None,
+             'total_days': None, 'usage': None}
+
     results = []
     for k in keys:
         d_ocr = doses(raw[k])
+        dose = {**blank, **dose_map.get(k, {})}
 
         if k in KEY_SET:
             tops, best = [k], 0
@@ -138,7 +149,6 @@ def match_names(texts: list[str]) -> list[dict]:
             row = dist[pos[k]]
             best = int(row.min())
             if best > 2:
-                # 마스터에서 못 찾음 → OCR 원문 그대로 두고 사용자가 지우거나 고침
                 results.append({
                     'name': k,
                     'product_code': None,
@@ -146,21 +156,18 @@ def match_names(texts: list[str]) -> list[dict]:
                     'raw_text': raw[k][0],
                     'match_stage': '실패',
                     'distance': best,
+                    **dose,
                 })
                 continue
             tops = [KEYS[i] for i in np.where(row == best)[0]]
 
         sub = CAND[CAND['매칭키'].isin(tops)]
 
-        # 용량이 읽혔으면 용량으로 한 번 거른다
         if d_ocr:
             keep = sub.apply(lambda r: bool(_row_doses(r) & d_ocr), axis=1)
             if keep.any():
                 sub = sub[keep]
 
-        # 후보가 여럿이어도 하나만 고른다
-        #   1) 제품코드가 있는 것 우선 (실제 청구되는 약)
-        #   2) 이름이 짧은 것 우선 (기본 제형)
         pick = sub.copy()
         pick['_code'] = (pick['제품코드'] != '').astype(int)
         pick['_len'] = pick['한글상품명'].str.len()
@@ -174,11 +181,18 @@ def match_names(texts: list[str]) -> list[dict]:
             'raw_text': raw[k][0],
             'match_stage': '정확일치' if best == 0 else '유사도확정',
             'distance': best,
+            **dose,
         })
 
-    # 같은 약으로 확정된 건 하나로 합친다 (넥스라줄정 / 넥스라졸정)
     merged = {}
     for r in results:
         key = r['name'] if r['matched'] else f"__{r['name']}"
-        merged.setdefault(key, r)
+        if key not in merged:
+            merged[key] = r
+            continue
+        # 같은 약이 두 번 읽힌 경우 — 비어 있는 복용법만 채운다
+        cur = merged[key]
+        for f in blank:
+            if cur[f] is None and r[f] is not None:
+                cur[f] = r[f]
     return list(merged.values())
