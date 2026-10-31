@@ -6,8 +6,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from rapidfuzz import distance, process
-
-DATA_DIR = Path(__file__).parent / 'data'
+from app.core.config import DATA_DIR
 
 # ── 정규화 규칙 ──────────────────────────────────────────
 LEAD_SYM = re.compile(r'^[*©®※·∙:：\s]+')

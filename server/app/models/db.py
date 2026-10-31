@@ -1,7 +1,6 @@
 import sqlite3
-from pathlib import Path
 
-DB_PATH = Path(__file__).parent / 'intermedi.db'
+from app.core.config import DB_PATH
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS prescription (
