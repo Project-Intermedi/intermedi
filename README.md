@@ -32,7 +32,7 @@ AI 기반 병원 진료 처방전 해석기
 
 \- App: React Native
 
-\- Server: FastAPI, PostgreSQL
+\- Server: FastAPI, SQLite
 
 \- OCR: PaddleOCR, Google ML Kit
 
@@ -66,15 +66,23 @@ intermedi/
 
 ├── server/                   # FastAPI
 
-│   └── app/
+│   ├── app/
 
-│       ├── api/              # 라우터
+│   │   ├── api/              # 라우터
 
-│       ├── core/             # 설정, 환경변수
+│   │   ├── core/             # 설정, 환경변수
 
-│       ├── models/           # DB 모델
+│   │   ├── models/           # DB 모델
 
-│       └── services/         # OCR, 공공API, DUR 판정
+│   │   ├── schemas/          # API 입출력 형식 (Pydantic)
+
+│   │   ├── services/         # OCR, 공공API, DUR 판정
+
+│   │   └── main.py           # 앱 생성, CORS
+
+│   ├── data/                 # 약가마스터 CSV (커밋 안 함)
+
+│   └── uploads/              # 업로드 이미지 (커밋 안 함)
 
 ├── docs/
 
