@@ -11,6 +11,7 @@ from app.models import db
 from app.schemas.record import RecordIn
 from app.services.match import match_codes, match_names
 from app.services.ocr import run_ocr
+from app.services.meta import extract_meta
 
 router = APIRouter()
 
@@ -29,6 +30,8 @@ async def analyze(file: UploadFile = File(...), source: str = Form('bag')):
         'image_path': str(path.relative_to(BASE_DIR)),
         'source': source,
         'line_count': len(texts),
+        **extract_meta(texts),
+        'diagnosis': None,
         'medicines': medicines,
     }
 

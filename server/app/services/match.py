@@ -14,6 +14,7 @@ from app.services.prescription import extract_items
 LEAD_SYM = re.compile(r'^[*©®※·∙:：\s]+')
 LEAD_PAREN = re.compile(r'^\([^)]*\)')
 LEAD_BRACKET = re.compile(r'^\[[^\]]*\]')
+FIRST_BRACKET = re.compile(r'\[.*$', re.S)
 PREFIX_MARK = re.compile(r'^[^(]{0,2}\)')
 FIRST_PAREN = re.compile(r'\(.*$', re.S)
 TAIL_JUNK = re.compile(r'[,.·;:_\s]+$')
@@ -42,6 +43,7 @@ def core(t: str) -> str:
     t = LEAD_PAREN.sub('', t)
     t = PREFIX_MARK.sub('', t)
     t = FIRST_PAREN.sub('', t)
+    t = FIRST_BRACKET.sub('', t)
     t = TAIL_JUNK.sub('', t)
     prev = None
     while prev != t:
