@@ -1,4 +1,5 @@
 import type { AnalysisDraft } from './api/analyze';
+import type { PillDetail, PillSearchParams } from './features/pill-search/types/pill';
 export type ScreenName =
   | 'home'
   | 'camera'
@@ -11,6 +12,8 @@ export type ScreenName =
   | 'medication-detail'
   | 'medication-search'
   | 'pill-appearance-search'
+  | 'pill-search-results'
+  | 'pill-search-detail'
   | 'chatbot'
   | 'supplement-management'
   | 'prescription-edit';
@@ -26,6 +29,8 @@ export interface CapturedImage {
 }
 
 export interface NavParams {
+  pillSearch?: PillSearchParams;
+  pill?: PillDetail;
   capturedImage?: CapturedImage;
   draft?: AnalysisDraft;
   medicationName?: string;

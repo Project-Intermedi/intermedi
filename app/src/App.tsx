@@ -14,6 +14,7 @@ import PrescriptionDetailScreen from './screens/PrescriptionDetailScreen';
 import MedicationDetailScreen from './screens/MedicationDetailScreen';
 import MedicationSearchScreen from './screens/MedicationSearchScreen';
 import PillAppearanceSearchScreen from './screens/PillAppearanceSearchScreen';
+import { PillResultsRoute, PillDetailRoute } from './features/pill-search/screens/PillSearchRoutes';
 import ChatbotScreen from './screens/ChatbotScreen';
 import SupplementManagementScreen from './screens/SupplementManagementScreen';
 import PrescriptionEditScreen from './screens/PrescriptionEditScreen';
@@ -33,6 +34,8 @@ function Screen({ entry, dir }: { entry: StackEntry; dir: 'forward' | 'back' }) 
       case 'medication-detail':       return <MedicationDetailScreen />;
       case 'medication-search':       return <MedicationSearchScreen />;
       case 'pill-appearance-search':  return <PillAppearanceSearchScreen />;
+      case 'pill-search-results':     return <PillResultsRoute />;
+      case 'pill-search-detail':      return <PillDetailRoute />;
       case 'chatbot':                 return <ChatbotScreen />;
       case 'supplement-management':   return <SupplementManagementScreen />;
       case 'prescription-edit':       return <PrescriptionEditScreen />;
@@ -56,7 +59,7 @@ export default function App() {
 
   const navigate = useCallback((screen: ScreenName, params?: NavParams) => {
     setDir('forward');
-    setStack(prev => [...prev, { screen, params }]);
+    setStack(prev => [...prev, { screen, params: screen === 'pill-appearance-search' ? (params ?? {}) : params }]);
     setTick(t => t + 1);
   }, []);
 

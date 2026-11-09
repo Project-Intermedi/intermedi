@@ -114,6 +114,7 @@ export default function HomeScreen() {
               { label: '처방전 확인', icon: CalendarIcon, color: '#47795E', screen: 'prescription-detail' as const },
               { label: '약 안전 확인', icon: ShieldCheckIcon, color: '#47795E', screen: 'safety-detail' as const },
               { label: '약 검색', icon: SearchIcon, color: '#E07A5F', screen: 'medication-search' as const },
+              { label: '식별 검색', icon: PillIcon, color: '#47795E', screen: 'pill-appearance-search' as const },
               { label: '영양제 관리', icon: LeafIcon, color: '#E07A5F', screen: 'supplement-management' as const },
             ].map(({ label, icon: Icon, color, screen }) => (
               <button
