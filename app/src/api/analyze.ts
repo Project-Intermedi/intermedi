@@ -8,7 +8,7 @@
   dose: string;
   freq: string;
   days: string;
-  timing: string;
+  usage: string | null;
 }
 export interface AnalysisDraft {
   medicines: AnalysisMedicine[];
@@ -17,6 +17,11 @@ export interface AnalysisDraft {
   date: string;
   diagnosis: string;
 }
+function inputText(value: unknown): string {
+  return typeof value === 'string' ? value
+    : typeof value === 'number' && Number.isFinite(value) ? String(value) : '';
+}
+
 export function parseAnalysis(value: unknown): AnalysisDraft {
   if (!value || typeof value !== 'object' || !('medicines' in value) || !Array.isArray(value.medicines)) {
     throw new Error('서버 응답에 medicines 배열이 없어요. 응답 형식을 확인해주세요.');
@@ -31,10 +36,15 @@ export function parseAnalysis(value: unknown): AnalysisDraft {
       matched: typeof m.matched === 'boolean' ? m.matched : null,
       raw_text: str('raw_text'), match_stage: str('match_stage'),
       distance: typeof m.distance === 'number' ? m.distance : null,
-      dose: '', freq: '', days: '', timing: '',
+      dose: inputText(m.dose_once), freq: inputText(m.times_per_day),
+      days: inputText(m.total_days), usage: str('usage'),
     };
   });
-  return { medicines, hospital: '', doctor: '', date: '', diagnosis: '' };
+  const metadata = value as Record<string, unknown>;
+  return {
+    medicines, hospital: inputText(metadata.hospital), doctor: inputText(metadata.doctor),
+    date: inputText(metadata.issued_at), diagnosis: inputText(metadata.diagnosis),
+  };
 }
 export async function analyze(file: File, signal: AbortSignal): Promise<AnalysisDraft> {
   const body = new FormData();

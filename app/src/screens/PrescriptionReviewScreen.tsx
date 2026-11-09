@@ -92,7 +92,7 @@ export default function PrescriptionReviewScreen() {
                     { label: '1회 투여량', value: m.dose },
                     { label: '하루 투여횟수', value: m.freq },
                     { label: '총 투여일수', value: m.days },
-                    { label: '복용방법', value: m.timing },
+                    { label: '복용방법', value: m.usage },
                   ].map(({ label, value }) => (
                     <div key={label} className="bg-white rounded-xl p-2.5">
                       <p className="text-[11px] text-[#6B7280]">{label}</p>

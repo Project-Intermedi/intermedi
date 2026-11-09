@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { useNav } from '../context/NavigationContext';
 import StatusBar from '../components/StatusBar';
 import DatePickerModal from '../components/DatePickerModal';
+import UsageSelector from '../components/UsageSelector';
 import {
   ArrowLeftIcon, CalendarIcon, CheckIcon, PlusIcon, XIcon, EditIcon,
 } from '../components/Icons';
 
 import type { AnalysisMedicine as Med } from '../api/analyze';
 
-const TIMING_OPTIONS = ['식전 30분', '식후 30분', '식사 중', '취침 전', '공복 시'];
 
 export default function PrescriptionEditScreen() {
   const { goBack, navigate, params } = useNav();
@@ -29,7 +29,7 @@ export default function PrescriptionEditScreen() {
     setMeds(prev => prev.filter((_, i) => i !== idx));
 
   const addMed = () =>
-    setMeds(prev => [...prev, { name: '', dose: '', freq: '', days: '', timing: '', matched: null, product_code: null, raw_text: null, match_stage: null, distance: null }]);
+    setMeds(prev => [...prev, { name: '', dose: '', freq: '', days: '', usage: null, matched: null, product_code: null, raw_text: null, match_stage: null, distance: null }]);
 
   const handleSave = () => {
     const updated = { medicines: meds, hospital, doctor, date, diagnosis };
@@ -190,16 +190,11 @@ export default function PrescriptionEditScreen() {
                   {/* 복용 방법 */}
                   <div className="bg-white rounded-xl p-3">
                     <p className="text-[11px] text-[#6B7280] mb-2">복용 방법</p>
-                    <select
-                      value={m.timing}
-                      onChange={e => updateMed(idx, 'timing', e.target.value)}
-                      className="w-full text-[12px] font-semibold text-[#222222] outline-none bg-transparent"
-                    >
-                      <option value="">직접 확인 필요</option>
-                      {TIMING_OPTIONS.map(t => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
+                    <UsageSelector
+                      value={m.usage}
+                      timesPerDay={m.freq}
+                      onChange={usage => updateMed(idx, 'usage', usage)}
+                    />
                   </div>
                 </div>
               </div>
