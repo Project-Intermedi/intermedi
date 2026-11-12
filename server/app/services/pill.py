@@ -7,10 +7,9 @@ import re
 
 import pandas as pd
 
-from app.core.config import DATA_DIR
+from app.core.config import find_csv
 from collections import Counter
 
-CSV_DIR = DATA_DIR / 'pill'
 
 # 색이 아니라 농도 표현이라 버린다
 COLOR_MODIFIER = {'진한', '옅은'}
@@ -71,12 +70,8 @@ def _mark(s):
 
 
 def _load():
-    files = sorted(CSV_DIR.glob('*.csv'))
-    if not files:
-        raise FileNotFoundError(f'{CSV_DIR} 안에 csv가 없습니다')
-
-    df = pd.read_csv(files[0], dtype=str, encoding='utf-8-sig',
-                     low_memory=False).fillna('')
+    df = pd.read_csv(find_csv('낱알식별'), dtype=str,
+                     encoding='utf-8-sig', low_memory=False).fillna('')
 
     df['색'] = df.apply(_colors, axis=1)
     df['분할선'] = df.apply(_line, axis=1)

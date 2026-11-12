@@ -13,7 +13,8 @@ import requests
 
 BASE = ('https://apis.data.go.kr/1471000/MdcinGrnIdntfcInfoService03'
         '/getMdcinGrnIdntfcInfoList03')
-OUT = Path(__file__).parent / 'data' / 'pill' / '낱알식별.csv'
+OUT = (Path(__file__).parent / 'data' /
+       f'식품의약품안전처_의약품낱알식별정보_{time.strftime("%Y%m%d")}.csv')
 ROWS = 500      # 한 번에 받을 건수
 SLEEP = 0.5     # 호출 간 간격 (초)
 TRIES = 5       # 한 쪽당 시도 횟수

@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from rapidfuzz import distance, process
 
-from app.core.config import DATA_DIR
+from app.core.config import find_csv
 from app.services.dosage import extract_dosage
 from app.services.prescription import extract_items
 
@@ -97,14 +97,12 @@ def _strip13(s):
 
 
 def _load_master():
-    files = sorted(DATA_DIR.glob('*.csv'))
-    if not files:
-        raise FileNotFoundError(f'{DATA_DIR} 안에 csv가 없습니다')
+    path = find_csv('약가마스터')
 
     df = None
     for enc in ('cp949', 'utf-8-sig', 'euc-kr'):
         try:
-            df = pd.read_csv(files[0], dtype=str, encoding=enc, low_memory=False)
+            df = pd.read_csv(path, dtype=str, encoding=enc, low_memory=False)
             break
         except UnicodeDecodeError:
             continue
