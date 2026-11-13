@@ -6,11 +6,12 @@ from app.services import pill
 router = APIRouter(prefix='/pills')
 
 
-def _cond(name, front, back, shapes, colors, form, line, entp):
+def _cond(name, front, back, shapes, colors, form, line, entp, category):
     return {
         'name': name, 'front': front, 'back': back,
         'shapes': shapes, 'colors': colors,
         'form': form, 'line': line, 'entp': entp,
+        'category': category,
     }
 
 
@@ -24,10 +25,12 @@ def search(
     form: str | None = None,
     line: str | None = None,
     entp: str | None = None,
+    category: str | None = None,
     limit: int = 50,
 ):
-    return pill.search(limit=limit,
-                       **_cond(name, front, back, shapes, colors, form, line, entp))
+    return pill.search(
+        limit=limit,
+        **_cond(name, front, back, shapes, colors, form, line, entp, category))
 
 
 @router.get('/count')
@@ -40,8 +43,10 @@ def count(
     form: str | None = None,
     line: str | None = None,
     entp: str | None = None,
+    category: str | None = None,
 ):
-    return pill.count(**_cond(name, front, back, shapes, colors, form, line, entp))
+    return pill.count(
+        **_cond(name, front, back, shapes, colors, form, line, entp, category))
 
 
 @router.get('/options')

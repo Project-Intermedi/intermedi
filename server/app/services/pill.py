@@ -85,10 +85,23 @@ PILL = _load()
 print(f'낱알식별 적재 완료 — {len(PILL):,}건')
 
 # ── 검색 ─────────────────────────────────────────────────
+
+# 화면 카테고리 ↔ 식약처 약효분류번호
+# 한 분류가 여러 카테고리에 들어갈 수 있다 (복합감기약은 해열진통제로 분류됨)
+CATEGORY = {
+    '감기약': ('01140', '01410', '02220', '02290'),
+    '소화제': ('02320', '02330', '02340', '02350',
+               '02360', '02370', '02380', '02390'),
+    '진통제': ('01140', '08110', '08210'),
+    '알레르기약': ('01410', '01490'),
+    '항생제': ('06130', '06140', '06150', '06180', '06190', '06290'),
+    '혈압약': ('02140',),
+}
+
 CONDITION_LABEL = {
     'name': '약품명', 'front': '앞면 각인', 'back': '뒷면 각인',
     'shapes': '모양', 'colors': '색상', 'form': '제형',
-    'line': '분할선', 'entp': '제조사',
+    'line': '분할선', 'entp': '제조사', 'category': '카테고리',
 }
 
 
@@ -114,7 +127,7 @@ def _has(col, text):
 
 
 def _mask(name=None, front=None, back=None, shapes=None, colors=None,
-          form=None, line=None, entp=None):
+          form=None, line=None, entp=None, category=None):
     """조건에 맞는 행을 True로 표시한다. 빈 조건은 무시한다."""
     m = pd.Series(True, index=PILL.index)
 
@@ -139,6 +152,8 @@ def _mask(name=None, front=None, back=None, shapes=None, colors=None,
         m &= PILL['제형'] == form
     if line:
         m &= PILL['분할선'] == line
+    if category:
+        m &= PILL['CLASS_NO'].isin(CATEGORY.get(category, ()))
 
     want = set(colors or ())
     if want:
@@ -200,4 +215,7 @@ def options():
         'lines': vc(PILL['분할선'], skip=('기타',)),
         'colors': [{'value': k, 'count': n}
                    for k, n in color_count.most_common()],
+        'categories': [{'value': k,
+            'count': int(PILL['CLASS_NO'].isin(v).sum())}
+            for k, v in CATEGORY.items()],
     }
