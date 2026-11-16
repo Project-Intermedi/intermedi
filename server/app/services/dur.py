@@ -5,7 +5,8 @@ import pandas as pd
 import re
 
 from app.core.config import find_csv
-from app.services.match import MED
+from app.services.match import MED, spec_of
+from app.services.plain import GUIDE, age_guide, age_of, plain
 
 
 def _read(keyword):
@@ -93,8 +94,9 @@ def _seq(med):
 
 
 def _who(m):
-    """화면에 띄울 약 한 줄 — 어느 병원 처방인지 같이"""
+    """화면에 띄울 약 한 줄 — 규격과 어느 병원 처방인지 같이"""
     return {'name': m.get('name', ''),
+            'spec': spec_of(m.get('product_code'), m.get('name')),
             'hospital': m.get('hospital') or '',
             'issued_at': (m.get('issued_at') or '')[:10]}
 
@@ -122,6 +124,7 @@ def combo(meds):
                         'ingr_a': INGR_NAME.get(a, ''),
                         'ingr_b': INGR_NAME.get(b, ''),
                         'reason': PAIRS[key],
+                        'plain': plain(PAIRS[key]),
                     })
     return out
 
@@ -152,6 +155,15 @@ def duplicate(meds):
     return out
 
 
+def _note(label, v):
+    """약 칩 옆에 붙일 짧은 한마디"""
+    if label == '특정연령대금기':
+        return age_of(v['detail'])
+    if label == '용량주의':
+        return v['detail']
+    return ''
+
+
 def alerts(meds):
     """품목 단위 주의 — 종류별로, 한 약은 한 번만"""
     bucket, seen = defaultdict(list), defaultdict(set)
@@ -161,9 +173,17 @@ def alerts(meds):
             if seq in seen[label]:
                 continue
             seen[label].add(seq)
-            bucket[label].append({**_who(m), **v})
-    return [{'type': label, 'drugs': bucket[label]}
-            for label, _ in FLAG_FILES if bucket.get(label)]
+            bucket[label].append({**_who(m), **v, 'note': _note(label, v)})
+    out = []
+    for label, _ in FLAG_FILES:
+        rows = bucket.get(label)
+        if not rows:
+            continue
+        guide = GUIDE.get(label, '')
+        if label == '특정연령대금기':
+            guide = age_guide(r['note'] for r in rows)
+        out.append({'type': label, 'guide': guide, 'drugs': rows})
+    return out
 
 
 def check(meds):

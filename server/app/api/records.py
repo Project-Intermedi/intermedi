@@ -1,6 +1,7 @@
 """처방 기록 엔드포인트"""
 import shutil
 import uuid
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
@@ -9,7 +10,8 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from app.core.config import BASE_DIR, UPLOAD_DIR
 from app.models import db
 from app.schemas.record import RecordIn
-from app.services.match import match_codes, match_names
+from app.services import period
+from app.services.match import match_codes, match_names, spec_of
 from app.services.ocr import run_ocr
 from app.services.meta import extract_meta
 
@@ -61,17 +63,46 @@ def create_record(body: RecordIn):
     return {'id': pid}
 
 
+def _mark(rec, meds):
+    """처방 하나에 복용 중 정보를 달아준다"""
+    when = {'issued_at': rec['issued_at'], 'created_at': rec['created_at']}
+    for m in meds:
+        m['taking'] = period.taking({**m, **when})
+        m['spec'] = spec_of(m.get('product_code'), m.get('name'))
+    rec['medicine_count'] = len(meds)
+    rec['taking_count'] = sum(1 for m in meds if m['taking'])
+    rec['taking'] = rec['taking_count'] > 0
+    rec['ends_on'] = max((period.ends_on({**m, **when}) for m in meds),
+                         default='')
+    return rec
+
+
 @router.get('/records')
-def list_records():
+def list_records(status: str = 'all'):
+    """status — all · taking(복용 중) · done(복용 완료)"""
     with db.conn() as c:
-        rows = c.execute(
-            """SELECT p.*, COUNT(m.id) AS medicine_count
-               FROM prescription p
-               LEFT JOIN medicine m ON m.prescription_id = p.id
-               GROUP BY p.id
-               ORDER BY p.id DESC"""
-        ).fetchall()
-    return [dict(r) for r in rows]
+        ps = c.execute('SELECT * FROM prescription ORDER BY id DESC').fetchall()
+        ms = c.execute('SELECT * FROM medicine ORDER BY id').fetchall()
+
+    by_pid = defaultdict(list)
+    for m in ms:
+        by_pid[m['prescription_id']].append(dict(m))
+
+    out = []
+    for p in ps:
+        rec = dict(p)
+        meds = by_pid.get(rec['id'], [])
+        _mark(rec, meds)
+        rec['medicines'] = [{'id': m['id'], 'name': m['name'],
+                             'spec': m['spec'], 'taking': m['taking']}
+                            for m in meds]
+        out.append(rec)
+
+    if status == 'taking':
+        out = [r for r in out if r['taking']]
+    elif status == 'done':
+        out = [r for r in out if not r['taking']]
+    return out
 
 
 @router.get('/records/{record_id}')
@@ -83,6 +114,9 @@ def get_record(record_id: int):
             raise HTTPException(404, '없는 기록입니다')
         meds = c.execute('SELECT * FROM medicine WHERE prescription_id = ?',
                          (record_id,)).fetchall()
-    out = dict(p)
-    out['medicines'] = [dict(m) for m in meds]
-    return out
+
+    rec = dict(p)
+    out_meds = [dict(m) for m in meds]
+    _mark(rec, out_meds)
+    rec['medicines'] = out_meds
+    return rec

@@ -15,6 +15,7 @@ class SafetyIn(BaseModel):
 
 class Who(BaseModel):
     name: str
+    spec: str = ''
     hospital: str = ''
     issued_at: str = ''
 
@@ -25,6 +26,7 @@ class ComboOut(BaseModel):
     ingr_a: str
     ingr_b: str
     reason: str
+    plain: str = ''
 
 
 class DuplicateOut(BaseModel):
@@ -34,6 +36,7 @@ class DuplicateOut(BaseModel):
 
 
 class FlagDrug(Who):
+    note: str = ''
     detail: str = ''
     ingr: str = ''
     cls: str = ''
@@ -41,6 +44,7 @@ class FlagDrug(Who):
 
 class AlertOut(BaseModel):
     type: str
+    guide: str = ''
     drugs: list[FlagDrug]
 
 

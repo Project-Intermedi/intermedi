@@ -130,7 +130,17 @@ MED = _load_master()
 CAND = MED[MED['매칭키'] != ''].drop_duplicates(subset=['매칭키', '약품규격'])
 KEYS = sorted(CAND['매칭키'].unique())
 KEY_SET = set(KEYS)
+_s = MED[MED['제품코드'] != '']
+SPEC_BY_CODE = dict(zip(_s['제품코드'], _s['약품규격']))
+SPEC_BY_NAME = dict(zip(MED['한글상품명'], MED['약품규격']))
 
+
+def spec_of(product_code=None, name=None):
+    """약품규격 — 제품코드 우선, 없으면 상품명"""
+    code = (product_code or '').strip()
+    if code and code in SPEC_BY_CODE:
+        return SPEC_BY_CODE[code]
+    return SPEC_BY_NAME.get((name or '').strip(), '')
 
 # 코드 조회용 3단계 — 제품코드 → 대표코드 복원 → 표준코드 복원
 def _code_index(col):
