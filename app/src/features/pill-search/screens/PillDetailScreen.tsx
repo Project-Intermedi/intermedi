@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { PillDetail } from '../types/pill';
+import { formatImprint } from '../utils/formatImprint';
 import { EmptyValue, ScreenHeader } from '../components/PillSearchUI';
 
 type DetailTab = '약품정보' | '허가정보' | '건강보험' | 'DUR';
@@ -12,16 +13,23 @@ export interface PillDetailScreenProps {
 }
 
 function PillVisual({ pill }: { pill: PillDetail }) {
+  const [failed, setFailed] = useState(false);
+  if (pill.imageUrl && !failed) {
+    return <img src={pill.imageUrl} alt={`${pill.name} 낱알 사진`} onError={() => setFailed(true)} className="h-48 w-full rounded-[22px] bg-[#EAF1EE] object-contain" />;
+  }
   return (
+    <>
+    <p className="mb-2 text-[11px] text-[#85918B]">{pill.imageUrl ? '사진을 불러오지 못했어요.' : '사진이 없어요.'} 예시 그림은 실제 약품 사진이 아닙니다.</p>
     <div className="relative grid min-h-48 grid-cols-2 place-items-center overflow-hidden rounded-[22px] bg-[#E4F0EB]">
       <span className="absolute inset-0 opacity-60" style={{ backgroundImage: 'linear-gradient(#C8DBD3 1px,transparent 1px),linear-gradient(90deg,#C8DBD3 1px,transparent 1px)', backgroundSize: '30px 30px' }} />
       {[pill.frontImprint, pill.backImprint].map((imprint, index) => (
         <div key={index} className="relative z-10 text-center">
-          <span className="grid h-15 w-20 place-items-center rounded-[50%] border border-black/10 text-sm font-bold text-black/35 shadow-lg" style={{ background: pill.pillColor }}>{imprint || '—'}</span>
+          <span className="grid h-15 w-20 place-items-center rounded-[50%] border border-black/10 text-sm font-bold text-black/35 shadow-lg" style={{ background: pill.pillColor ?? '#F8FAF9' }}>{formatImprint(imprint) || '—'}</span>
           <span className="mt-3 block text-[10px] font-semibold text-[#65746C]">{index === 0 ? '앞면' : '뒷면'}</span>
         </div>
       ))}
     </div>
+    </>
   );
 }
 
@@ -44,11 +52,9 @@ export default function PillDetailScreen({ pill, onBack, onSave }: PillDetailScr
           {tab === '약품정보' ? (
             <div className="p-5">
               <div className="mb-4 flex items-center justify-between">
-                <span className="rounded-full bg-[#EAF3EE] px-2.5 py-1 text-[10px] font-bold text-[#47795E]">{pill.category || '구분 정보 미연동'}</span>
-                <span className="text-[10px] font-medium text-[#BE624C]">목업 데이터</span>
+                <span className="rounded-full bg-[#EAF3EE] px-2.5 py-1 text-[10px] font-bold text-[#47795E]">{pill.category || '구분 정보 없음'}</span>
               </div>
-              <p className="mb-2 text-[11px] text-[#85918B]">앞·뒷면 목업 예시 그림 · 실제 약품 사진 아님</p>
-              <PillVisual pill={pill} />
+              <PillVisual key={pill.imageUrl ?? pill.id} pill={pill} />
               <dl className="mt-3">
                 <InfoRow label="제조사" value={pill.manufacturer} />
                 <InfoRow label="분류명" value={pill.classification} />
@@ -59,18 +65,19 @@ export default function PillDetailScreen({ pill, onBack, onSave }: PillDetailScr
                 <InfoRow label="모양" value={pill.shape} />
                 <InfoRow label="색상" value={pill.color} />
                 <InfoRow label="제형" value={pill.dosageForm} />
-                <InfoRow label="식별 문자" value={pill.frontImprint || pill.backImprint ? `앞: ${pill.frontImprint ?? '정보 없음'} / 뒤: ${pill.backImprint ?? '정보 없음'}` : null} />
+                <InfoRow label="분할선" value={pill.scoreLine ?? null} />
+                <InfoRow label="식별 문자" value={pill.frontImprint || pill.backImprint ? `앞: ${formatImprint(pill.frontImprint) || '정보 없음'} / 뒤: ${formatImprint(pill.backImprint) || '정보 없음'}` : null} />
               </dl>
             </div>
           ) : (
             <div className="px-7 py-18 text-center">
               <div className="mx-auto grid size-14 place-items-center rounded-full bg-[#EDF3F0] text-2xl text-[#47795E]">i</div>
               <h2 className="mt-4 text-[15px] font-bold text-[#2B3932]">{tab} 정보</h2>
-              <p className="mt-2 text-[12px] leading-5 text-[#85918B]">현재 미연동 상태입니다. API 연결 후 정보를 불러올 예정입니다.</p>
+              <p className="mt-2 text-[12px] leading-5 text-[#85918B]">{tab} 정보는 현재 제공되지 않아요.</p>
             </div>
           )}
         </section>
-        <p className="mt-5 text-center text-[10px] leading-4 text-[#9AA49F]">표시된 정보는 UI 확인용 목업입니다.<br />복약 전 의사·약사와 상담해주세요.</p>
+        <p className="mt-5 text-center text-[10px] leading-4 text-[#9AA49F]">복약 전 의사·약사와 상담해주세요.</p>
       </main>
     </div>
   );

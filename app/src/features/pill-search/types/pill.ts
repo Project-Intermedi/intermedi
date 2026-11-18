@@ -1,13 +1,10 @@
-export type PillDosageForm = '전체' | '정제' | '경질캡슐' | '연질캡슐' | '기타';
-export type PillShape =
-  | '전체' | '원형' | '타원형' | '장방형' | '캡슐형' | '반원형' | '삼각형'
-  | '사각형' | '마름모형' | '오각형' | '육각형' | '팔각형' | '기타';
-export type PillColor =
-  | '전체' | '하양' | '노랑' | '주황' | '분홍' | '빨강' | '갈색' | '연두'
-  | '초록' | '청록' | '파랑' | '남색' | '자주' | '보라' | '회색' | '검정' | '투명';
-export type PillScoreLine =
-  | '전체' | '양면 없음' | '앞면 가로' | '양면 가로' | '앞면 세로'
-  | '양면 세로' | '앞면 십자' | '양면 십자' | '가로·십자' | '기타';
+export type PillDosageForm = string;
+export type PillShape = string;
+export type PillColor = string;
+export type PillScoreLine = string;
+
+/** 색상은 최대 2개까지 선택할 수 있습니다. 빈 배열은 '전체'를 의미합니다. */
+export const MAX_PILL_COLORS = 2;
 
 export interface PillSearchParams {
   drugName: string;
@@ -16,33 +13,49 @@ export interface PillSearchParams {
   noBackImprint: boolean;
   imprintSymbol: string;
   dosageForm: PillDosageForm;
-  shape: PillShape;
-  color: PillColor;
+  /** 복수 선택. 빈 배열 = 전체 */
+  shape: PillShape[];
+  /**
+   * UI 전용: shape 중 현재 제형에 의해 자동 선택된 모양.
+   * 제형 변경 시 이 모양만 해제하고 사용자가 직접 고른 모양은 유지합니다. API 요청에는 포함하지 않습니다.
+   */
+  autoShapes: PillShape[];
+  /** 최대 2개 선택. 빈 배열 = 전체 */
+  color: PillColor[];
   scoreLine: PillScoreLine;
   ingredient: string;
   manufacturer: string;
+  category: string;
 }
 
+/**
+ * 낱알 검색 결과 항목. 주석은 백엔드 GET /pills/search 응답 필드와의 대응입니다.
+ * 각인 문자열은 원본 그대로 보관하며, 화면 표시는 formatImprint()로 변환합니다.
+ */
 export interface PillSearchResult {
-  id: string;
-  name: string;
-  ingredient: string;
-  manufacturer: string | null;
-  category: '전문의약품' | '일반의약품' | null;
-  frontImprint: string | null;
-  backImprint: string | null;
-  pillColor: string;
-  isMock: true;
+  id: string;                                    // item_seq
+  name: string;                                  // name
+  ingredient: string | null;
+  manufacturer: string | null;                   // entp
+  category: string | null;     // etc_otc
+  imageUrl: string | null;                       // image (없으면 기본 알약 그림 표시)
+  shape: string | null;                          // shape
+  color: string | null;                          // colors (배열은 ' · '로 이어 표시)
+  dosageForm: string | null;                     // form
+  frontImprint: string | null;                   // print_front
+  backImprint: string | null;                    // print_back
+  /** 사진이 없을 때 쓰는 목업 알약 그림 색 */
+  pillColor?: string;
+  isMock?: true;
+  scoreLine?: string | null;
 }
 
 export interface PillDetail extends PillSearchResult {
-  classification: string | null;
+  classification: string | null;                 // class_name
   atcCode: string | null;
   equivalence: string | null;
-  shape: string | null;
-  color: string | null;
-  dosageForm: string | null;
 }
+
 
 export const INITIAL_PILL_SEARCH_PARAMS: PillSearchParams = {
   drugName: '',
@@ -51,9 +64,11 @@ export const INITIAL_PILL_SEARCH_PARAMS: PillSearchParams = {
   noBackImprint: false,
   imprintSymbol: '',
   dosageForm: '전체',
-  shape: '전체',
-  color: '전체',
+  shape: [],
+  autoShapes: [],
+  color: [],
   scoreLine: '전체',
   ingredient: '',
   manufacturer: '',
+  category: '전체',
 };

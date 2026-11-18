@@ -10,6 +10,7 @@ export function searchMockPills(results: PillDetail[], params: PillSearchParams)
     && includes(pill.frontImprint, params.imprintFront)
     && (params.noBackImprint ? pill.backImprint === '' : includes(pill.backImprint, params.imprintBack))
     && includes(pill.ingredient, params.ingredient) && includes(pill.manufacturer, params.manufacturer)
-    && (params.shape === '전체' || params.shape === pill.shape)
-    && (params.color === '전체' || params.color === pill.color));
+    && (params.shape.length === 0 || params.shape.some(shape => shape === pill.shape))
+    // 백엔드 규칙과 동일하게, 선택한 색상을 모두 가진 약만 통과합니다.
+    && params.color.every(color => (pill.color || '').includes(color)));
 }

@@ -15,13 +15,13 @@ export function PillSearchRoute() {
   // The navigation entry survives screen remounts, so edits and Back retain conditions.
   const [initial] = useState(() => ({ ...(params.pillSearch ?? INITIAL_PILL_SEARCH_PARAMS) }));
   const retain = (next: PillSearchParams) => { params.pillSearch = { ...next }; };
-  return <Frame><PillSearchScreen initialParams={initial} onParamsChange={retain} onBack={goBack} onSearch={next => { retain(next); navigate('pill-search-results', { pillSearch: { ...next } }); }} /></Frame>;
+  return <Frame><PillSearchScreen initialParams={initial} onParamsChange={retain} onBack={goBack} onSearch={next => { retain(next); navigate('pill-search-results', params); }} /></Frame>;
 }
 export function PillResultsRoute() {
   const { params, navigate, goBack } = useNav();
-  return <Frame><PillSearchResultScreen params={params.pillSearch ?? INITIAL_PILL_SEARCH_PARAMS} onBack={goBack} onEditConditions={goBack} onSelectPill={pill => navigate('pill-search-detail', { pill, pillSearch: params.pillSearch })} /></Frame>;
+  return <Frame><PillSearchResultScreen params={params.pillSearch ?? INITIAL_PILL_SEARCH_PARAMS} onBack={goBack} onEditConditions={goBack} onParamsChange={next => { params.pillSearch = next; }} onSelectPill={pill => navigate('pill-search-detail', { pill, pillSearch: params.pillSearch })} /></Frame>;
 }
 export function PillDetailRoute() {
   const { params, goBack } = useNav();
-  return <Frame>{params.pill ? <PillDetailScreen pill={params.pill} onBack={goBack} /> : <div className="p-5"><p>선택한 목업 약품이 없습니다.</p><button onClick={goBack}>뒤로가기</button></div>}</Frame>;
+  return <Frame>{params.pill ? <PillDetailScreen pill={params.pill} onBack={goBack} /> : <div className="p-5"><p>선택한 약품이 없습니다.</p><button onClick={goBack}>뒤로가기</button></div>}</Frame>;
 }
