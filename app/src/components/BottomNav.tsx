@@ -9,8 +9,8 @@ type Tab = { label: string; screen: ScreenName; Icon: React.FC<any> };
 const tabs: Tab[] = [
   { label: '홈',     screen: 'home',                  Icon: HomeIcon },
   { label: '통합 관리', screen: 'integrated-management', Icon: GridIcon },
-  { label: '약 챗봇',  screen: 'chatbot',               Icon: ChatIcon },
   { label: '약 검색',  screen: 'medication-search',      Icon: SearchIcon },
+  { label: '챗봇',    screen: 'chatbot',               Icon: ChatIcon },
 ];
 
 export default function BottomNav({ active }: { active: ScreenName }) {
