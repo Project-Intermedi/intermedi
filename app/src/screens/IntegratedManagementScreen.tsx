@@ -4,8 +4,9 @@ import StatusBar from '../components/StatusBar';
 import BottomNav from '../components/BottomNav';
 import { ChevronRightIcon, AlertTriangleIcon, PillIcon } from '../components/Icons';
 
-type Tab = '전체 처방' | '현재 복용 중' | '복용 완료';
-const TABS: Tab[] = ['전체 처방', '현재 복용 중', '복용 완료'];
+// 탭별 실제 필터링과 '복용 중 0건 → 전체 자동 선택'은 /records API 연동 단계에서 구현합니다.
+type Tab = '복용 중' | '복용 완료' | '전체';
+const TABS: Tab[] = ['복용 중', '복용 완료', '전체'];
 
 const hospitals = [
   {
@@ -20,17 +21,57 @@ const hospitals = [
 
 export default function IntegratedManagementScreen() {
   const { navigate } = useNav();
-  const [tab, setTab] = useState<Tab>('전체 처방');
+  const [tab, setTab] = useState<Tab>('복용 중');
 
   return (
     <div className="h-full flex flex-col bg-[#F4F7F6]">
       <div className="bg-white flex-shrink-0">
         <StatusBar />
-        <div className="px-5 pb-3">
+        <div className="px-5 pb-4 border-b border-[#E8EDEB]">
           <h1 className="text-[22px] font-black text-[#222222]">통합 관리</h1>
         </div>
-        {/* Tabs */}
-        <div className="flex px-5 gap-1 border-b border-[#E8EDEB]">
+      </div>
+
+      <div className="flex-1 overflow-y-auto scrollbar-hide px-4 pb-4 space-y-4 pt-4">
+        {/* Summary */}
+        <div className="bg-white rounded-2xl px-4 py-3 flex items-center justify-between shadow-sm">
+          <span className="text-[13px] text-[#6B7280] font-medium">현재 복용 중인 약</span>
+          <span className="text-[16px] font-black text-[#47795E]">5개</span>
+        </div>
+
+        {/* Safety summary */}
+        <div className="bg-[#FFF3F0] rounded-3xl px-4 py-4 border border-[#E07A5F]/20 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-2xl bg-[#E07A5F]/15 flex items-center justify-center flex-shrink-0">
+              <AlertTriangleIcon size={18} className="text-[#E07A5F]" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <p className="text-[15px] font-bold text-[#222222]">약 안전 확인</p>
+                <span className="text-[10px] font-bold text-[#E07A5F] bg-white border border-[#E07A5F]/30 px-2 py-0.5 rounded-full">검사 전</span>
+              </div>
+              <p className="text-[12px] text-[#6B7280] mt-0.5">실제 안전성 검사는 아직 연결되지 않았어요.</p>
+            </div>
+          </div>
+          {/* DUR API 연동 전: 검사 결과가 없으므로 건수 대신 '—' 표시 */}
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            {['중복 성분', '병용 주의', '약 자체 주의'].map(label => (
+              <div key={label} className="bg-white/70 rounded-2xl px-2 py-2 text-center border border-dashed border-[#E07A5F]/25">
+                <p className="text-[15px] font-black text-[#AEBFB7]" aria-label="검사 전">—</p>
+                <p className="text-[10px] text-[#6B7280] mt-0.5 leading-tight">{label}</p>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => navigate('safety-detail')}
+            className="w-full bg-[#E07A5F] rounded-2xl py-2.5 text-white text-[14px] font-bold shadow-sm shadow-[#E07A5F]/30 active:scale-[0.98] transition-transform"
+          >
+            안전성 자세히 확인
+          </button>
+        </div>
+
+        {/* Tabs (스크롤 시 목록 위에 고정) */}
+        <div className="sticky top-0 z-10 -mx-4 flex px-5 gap-1 border-b border-[#E8EDEB] bg-[#F4F7F6]">
           {TABS.map(t => (
             <button
               key={t}
@@ -44,14 +85,6 @@ export default function IntegratedManagementScreen() {
               {t}
             </button>
           ))}
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto scrollbar-hide px-4 pb-4 space-y-4 pt-4">
-        {/* Summary */}
-        <div className="bg-white rounded-2xl px-4 py-3 flex items-center justify-between shadow-sm">
-          <span className="text-[13px] text-[#6B7280] font-medium">현재 복용 중인 약</span>
-          <span className="text-[16px] font-black text-[#47795E]">5개</span>
         </div>
 
         {/* Hospital groups */}
@@ -88,36 +121,6 @@ export default function IntegratedManagementScreen() {
           </div>
         ))}
 
-        {/* Safety summary */}
-        <div className="bg-[#FFF3F0] rounded-3xl p-5 border border-[#E07A5F]/20 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#E07A5F]/15 flex items-center justify-center flex-shrink-0">
-              <AlertTriangleIcon size={20} className="text-[#E07A5F]" />
-            </div>
-            <div>
-              <p className="text-[15px] font-bold text-[#222222]">약 안전 확인</p>
-              <p className="text-[12px] text-[#6B7280] mt-0.5">여러 병원의 처방을 함께 분석했어요.</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            {[
-              { label: '중복 성분', count: '1건', color: '#E07A5F' },
-              { label: '병용 주의', count: '1건', color: '#E07A5F' },
-              { label: '복용 시간 주의', count: '0건', color: '#47795E' },
-            ].map(({ label, count, color }) => (
-              <div key={label} className="bg-white rounded-2xl p-3 text-center">
-                <p className="text-[16px] font-black" style={{ color }}>{count}</p>
-                <p className="text-[10px] text-[#6B7280] mt-0.5 leading-tight">{label}</p>
-              </div>
-            ))}
-          </div>
-          <button
-            onClick={() => navigate('safety-detail')}
-            className="w-full bg-[#E07A5F] rounded-2xl py-3 text-white text-[14px] font-bold shadow-sm shadow-[#E07A5F]/30 active:scale-[0.98] transition-transform"
-          >
-            안전성 자세히 확인
-          </button>
-        </div>
       </div>
 
       <BottomNav active="integrated-management" />
