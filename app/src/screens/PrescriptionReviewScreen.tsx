@@ -1,11 +1,14 @@
 import { useNav } from '../context/NavigationContext';
 import StatusBar from '../components/StatusBar';
 import { ArrowLeftIcon, EditIcon, PlusIcon, InfoIcon, CheckIcon } from '../components/Icons';
+import { getSavedPrescriptionId } from '../hooks/usePrescriptionRegistration';
 
 export default function PrescriptionReviewScreen() {
   const { goBack, navigate, params } = useNav();
   const draft = params.draft;
   const meds = draft?.medicines ?? [];
+  const savedId = getSavedPrescriptionId(draft);
+  const editingDisabled = savedId !== undefined;
   return (
     <div className="h-full flex flex-col bg-[#F4F7F6]">
       <div className="bg-white flex-shrink-0">
@@ -35,6 +38,7 @@ export default function PrescriptionReviewScreen() {
             {/* Edit all hospital info at once */}
             <button
               onClick={() => navigate('prescription-edit', { draft })}
+              disabled={editingDisabled}
               className="flex items-center gap-1.5 bg-[#47795E]/10 rounded-full px-3 py-1.5"
             >
               <EditIcon size={13} className="text-[#47795E]" />
@@ -62,6 +66,7 @@ export default function PrescriptionReviewScreen() {
             <h2 className="text-[15px] font-bold text-[#222222]">인식된 약 {meds.length}개</h2>
             <button
               onClick={() => navigate('prescription-edit', { draft })}
+              disabled={editingDisabled}
               className="flex items-center gap-1.5 bg-[#47795E]/10 rounded-full px-3 py-1.5"
             >
               <EditIcon size={13} className="text-[#47795E]" />
@@ -81,6 +86,7 @@ export default function PrescriptionReviewScreen() {
                   </div>
                   <button
                     onClick={() => navigate('prescription-edit', { draft })}
+                    disabled={editingDisabled}
                     className="w-7 h-7 rounded-lg bg-white flex items-center justify-center"
                   >
                     <EditIcon size={13} className="text-[#6B7280]" />
@@ -107,6 +113,7 @@ export default function PrescriptionReviewScreen() {
           {/* Add medication */}
           <button
             onClick={() => navigate('prescription-edit', { draft })}
+            disabled={editingDisabled}
             className="mt-3 w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-dashed border-[#AEBFB7]"
           >
             <PlusIcon size={16} className="text-[#AEBFB7]" />
@@ -122,13 +129,17 @@ export default function PrescriptionReviewScreen() {
           </p>
         </div>
 
-        {/* CTA */}
         <button
-          disabled={!meds.length} onClick={() => navigate('registration-complete', { draft })}
-          className="w-full bg-[#E07A5F] rounded-2xl py-4 flex items-center justify-center gap-2 shadow-md shadow-[#E07A5F]/30 active:scale-[0.98] transition-transform"
+          disabled={!meds.length}
+          onClick={() => savedId === undefined
+            ? navigate('safety-preview', { draft })
+            : navigate('prescription-detail', { recordId: savedId })}
+          className="w-full bg-[#E07A5F] rounded-2xl py-4 flex items-center justify-center gap-2 shadow-md shadow-[#E07A5F]/30 active:scale-[0.98] transition-transform disabled:opacity-60"
         >
           <CheckIcon size={18} className="text-white" strokeWidth={3} />
-          <span className="text-white text-[16px] font-bold">확인 후 등록하기</span>
+          <span className="text-white text-[16px] font-bold">
+            {savedId !== undefined ? '저장한 처방 보기' : '안전성 확인하기'}
+          </span>
         </button>
       </div>
     </div>

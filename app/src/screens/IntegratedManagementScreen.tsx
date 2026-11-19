@@ -16,8 +16,8 @@ const EMPTY: Record<RecordsStatus, string> = {
 };
 
 export default function IntegratedManagementScreen() {
-  const { navigate } = useNav();
-  const [selectedTab, setTab] = useState<RecordsStatus | null>(null);
+  const { navigate, params } = useNav();
+  const [selectedTab, setTab] = useState<RecordsStatus | null>(params.showAllRecords ? 'all' : null);
   const taking = useGet<PrescriptionRecord[]>(recordsPath('taking'));
   const safety = useGet<SafetyResult>(safetyPath);
   const takingRecords = taking.result.status === 'success' ? taking.result.data : undefined;

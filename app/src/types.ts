@@ -8,6 +8,7 @@ export type ScreenName =
   | 'registration-complete'
   | 'integrated-management'
   | 'safety-detail'
+  | 'safety-preview'
   | 'prescription-detail'
   | 'medication-detail'
   | 'medication-search'
@@ -30,6 +31,7 @@ export interface CapturedImage {
 
 export interface NavParams {
   recordId?: number;
+  showAllRecords?: boolean;
   pillSearch?: PillSearchParams;
   pill?: PillDetail;
   capturedImage?: CapturedImage;

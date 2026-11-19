@@ -11,6 +11,8 @@
   usage: string | null;
 }
 export interface AnalysisDraft {
+  source: string;
+  imagePath: string | null;
   medicines: AnalysisMedicine[];
   hospital: string;
   doctor: string;
@@ -42,6 +44,8 @@ export function parseAnalysis(value: unknown): AnalysisDraft {
   });
   const metadata = value as Record<string, unknown>;
   return {
+    source: inputText(metadata.source).trim() || 'bag',
+    imagePath: typeof metadata.image_path === 'string' ? metadata.image_path : null,
     medicines, hospital: inputText(metadata.hospital), doctor: inputText(metadata.doctor),
     date: inputText(metadata.issued_at), diagnosis: inputText(metadata.diagnosis),
   };

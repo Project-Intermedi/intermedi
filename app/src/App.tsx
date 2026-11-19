@@ -10,6 +10,7 @@ import PrescriptionReviewScreen from './screens/PrescriptionReviewScreen';
 import RegistrationCompleteScreen from './screens/RegistrationCompleteScreen';
 import IntegratedManagementScreen from './screens/IntegratedManagementScreen';
 import SafetyDetailScreen from './screens/SafetyDetailScreen';
+import SafetyPreviewScreen from './screens/SafetyPreviewScreen';
 import PrescriptionDetailScreen from './screens/PrescriptionDetailScreen';
 import MedicationDetailScreen from './screens/MedicationDetailScreen';
 import MedicationSearchScreen from './screens/MedicationSearchScreen';
@@ -30,6 +31,7 @@ function Screen({ entry, dir }: { entry: StackEntry; dir: 'forward' | 'back' }) 
       case 'registration-complete':   return <RegistrationCompleteScreen />;
       case 'integrated-management':   return <IntegratedManagementScreen />;
       case 'safety-detail':           return <SafetyDetailScreen />;
+      case 'safety-preview':          return <SafetyPreviewScreen />;
       case 'prescription-detail':     return <PrescriptionDetailScreen />;
       case 'medication-detail':       return <MedicationDetailScreen />;
       case 'medication-search':       return <MedicationSearchScreen />;

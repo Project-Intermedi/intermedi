@@ -6,6 +6,8 @@ export default function RegistrationCompleteScreen() {
   const { navigate, params } = useNav();
   const draft = params.draft;
   const meds = draft?.medicines ?? [];
+  const { recordId } = params;
+  if (recordId === undefined) return null;
   return (
     <div className="h-full flex flex-col bg-white">
       <StatusBar />
@@ -15,19 +17,25 @@ export default function RegistrationCompleteScreen() {
           <div className="w-24 h-24 rounded-full bg-[#47795E]/10 flex items-center justify-center mb-6 scale-in">
             <CheckCircleIcon size={52} className="text-[#47795E]" />
           </div>
-          <h1 className="text-[26px] font-black text-[#222222] mb-2 text-center fade-in">분석 결과를 확인했어요!</h1>
+          <h1 className="text-[26px] font-black text-[#222222] mb-2 text-center fade-in">처방을 등록했어요!</h1>
           <p className="text-[14px] text-[#6B7280] text-center leading-relaxed fade-in">
-            확인한 정보는 현재 앱에서만 유지돼요.<br/>DB에는 저장되지 않았습니다.
+            저장한 처방은 통합 관리에서 확인할 수 있어요.
           </p>
         </div>
 
         {/* Buttons */}
         <div className="space-y-3 mb-8">
           <button
-            onClick={() => navigate('prescription-review', { draft })}
+            onClick={() => navigate('prescription-detail', { recordId })}
             className="w-full bg-[#47795E] rounded-2xl py-4 text-white text-[16px] font-bold shadow-md shadow-[#47795E]/25 active:scale-[0.98] transition-transform"
           >
-            확인한 처방 보기
+            저장한 처방 보기
+          </button>
+          <button
+            onClick={() => navigate('integrated-management', { showAllRecords: true })}
+            className="w-full bg-[#F4F7F6] rounded-2xl py-4 text-[#47795E] text-[16px] font-semibold active:bg-[#EBF0EE] transition-colors"
+          >
+            통합 관리에서 보기
           </button>
           <button
             onClick={() => navigate('home')}
@@ -39,7 +47,7 @@ export default function RegistrationCompleteScreen() {
 
         {/* Registered info */}
         <div className="bg-[#F4F7F6] rounded-3xl p-5">
-          <h2 className="text-[15px] font-bold text-[#222222] mb-4">확인한 처방 정보</h2>
+          <h2 className="text-[15px] font-bold text-[#222222] mb-4">등록한 처방 정보</h2>
           <div className="space-y-2.5 mb-4">
             {[
               { label: '병원', value: draft?.hospital || '정보 없음' },
