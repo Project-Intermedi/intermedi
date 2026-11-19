@@ -53,8 +53,7 @@ export default function HomeScreen() {
             </div>
             <div className="flex-1">
               <p className="text-white/75 text-[12px] font-medium mb-0.5">약 안전 상태</p>
-              <p className="text-white font-bold text-[16px] leading-snug">복용 중인 모든 약이 안전합니다</p>
-              <p className="text-white/70 text-[12px] mt-1 leading-snug">등록된 약의 중복 성분과 상호작용을 확인했어요</p>
+              <p className="text-white font-bold text-[16px] leading-snug">복용 중인 약의 안전성 확인</p>
             </div>
           </div>
           <button
@@ -70,7 +69,7 @@ export default function HomeScreen() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[16px] font-bold text-[#222222]">현재 복용 중인 약</h2>
             <button
-              onClick={() => navigate('prescription-detail')}
+              onClick={() => navigate('integrated-management')}
               className="text-[12px] text-[#47795E] font-semibold"
             >
               전체 보기
@@ -111,7 +110,7 @@ export default function HomeScreen() {
           <h2 className="text-[16px] font-bold text-[#222222] mb-4">빠른 메뉴</h2>
           <div className="grid grid-cols-4 gap-2">
             {[
-              { label: '처방전 확인', icon: CalendarIcon, color: '#47795E', screen: 'prescription-detail' as const },
+              { label: '처방전 확인', icon: CalendarIcon, color: '#47795E', screen: 'integrated-management' as const },
               { label: '약 안전 확인', icon: ShieldCheckIcon, color: '#47795E', screen: 'safety-detail' as const },
               { label: '약 검색', icon: SearchIcon, color: '#E07A5F', screen: 'medication-search' as const },
               { label: '식별 검색', icon: PillIcon, color: '#47795E', screen: 'pill-appearance-search' as const },
@@ -141,7 +140,7 @@ export default function HomeScreen() {
             <button onClick={() => navigate('integrated-management')} className="text-[12px] text-[#47795E] font-semibold">전체 보기</button>
           </div>
           <button
-            onClick={() => navigate('prescription-detail')}
+            onClick={() => navigate('integrated-management')}
             className="w-full flex items-center gap-4 p-4 rounded-2xl bg-[#F4F7F6] active:bg-[#EBF0EE] transition-colors text-left"
           >
             <div className="w-10 h-10 rounded-xl bg-[#47795E]/10 flex items-center justify-center flex-shrink-0">

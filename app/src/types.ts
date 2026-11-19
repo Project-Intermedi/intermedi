@@ -29,6 +29,7 @@ export interface CapturedImage {
 }
 
 export interface NavParams {
+  recordId?: number;
   pillSearch?: PillSearchParams;
   pill?: PillDetail;
   capturedImage?: CapturedImage;
