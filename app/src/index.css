@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap');
+@import 'tailwindcss';
+
+* {
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background-color: #E8F0EC;
+  overscroll-behavior: none;
+}
+
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(32px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes slideInLeft {
+  from { transform: translateX(-32px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes progressFill {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes checkDraw {
+  from { stroke-dashoffset: 100; opacity: 0; }
+  to   { stroke-dashoffset: 0;   opacity: 1; }
+}
+
+.screen-forward { animation: slideInRight 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+.screen-back    { animation: slideInLeft  0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+.fade-in        { animation: fadeIn  0.35s ease-out both; }
+.scale-in       { animation: scaleIn 0.35s ease-out both; }
+.pulse-anim     { animation: pulse 1.6s ease-in-out infinite; }
+.spin-anim      { animation: spin  1.2s linear infinite; }
+
+.step-done path,
+.step-done polyline,
+.step-done circle {
+  stroke-dasharray: 100;
+  animation: checkDraw 0.4s ease-out forwards;
+}
