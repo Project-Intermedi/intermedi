@@ -4,4 +4,4 @@ __pycache__/
 *.pyc
 uploads/
 intermedi.db
-data/*.csv
+data/*.csv_scratch/

@@ -3,12 +3,14 @@ from pathlib import Path
 
 # 이 파일이 server/app/core/config.py 이므로, 두 단계 위가 server/
 BASE_DIR = Path(__file__).resolve().parents[2]
-
-DB_PATH = BASE_DIR / 'intermedi.db'
 DATA_DIR = BASE_DIR / 'data'
 UPLOAD_DIR = BASE_DIR / 'uploads'
 
+DB_PATH = DATA_DIR / 'intermedi.db'
+DRUG_DB = DATA_DIR / 'drug_info.db'
+
 UPLOAD_DIR.mkdir(exist_ok=True)
+
 
 def find_csv(keyword: str):
     """data/ 에서 이름에 keyword 가 든 CSV 중 가장 최근 것을 고른다"""

@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import pill, records, safety
+from app.api import medicine, pill, records, safety
 from app.models import db
 
 
@@ -25,6 +25,7 @@ app.add_middleware(
 app.include_router(pill.router)
 app.include_router(records.router)
 app.include_router(safety.router)
+app.include_router(medicine.router)
 
 
 @app.get('/health')
