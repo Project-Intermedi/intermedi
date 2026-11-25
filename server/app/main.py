@@ -16,7 +16,10 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title='인터메디 API', version='0.1', lifespan=lifespan)
+# 외부 공개 시 API 구조가 그대로 노출되므로 자동 문서를 끈다.
+# 개발 중 필요하면 아래 세 인자를 잠시 지우면 된다.
+app = FastAPI(title='인터메디 API', version='0.1', lifespan=lifespan,
+              docs_url=None, redoc_url=None, openapi_url=None)
 
 app.add_middleware(
     CORSMiddleware,
