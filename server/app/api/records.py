@@ -38,6 +38,21 @@ async def analyze(file: UploadFile = File(...), source: str = Form('bag')):
     }
 
 
+def _recheck(m):
+    """저장 직전 이름으로 코드를 다시 확인한다.
+
+    사용자가 검토 화면에서 약 이름을 고쳤을 수 있다. 화면에서 확정한 것은
+    이름이므로 이름을 기준으로 삼는다. 코드가 없으면 DUR 검사에서 조용히
+    빠지므로, 채울 수 있으면 여기서 채운다.
+    """
+    hit = match_names([m.name]) if m.name else []
+    got = hit[0] if hit else None
+    if got and got.get('product_code'):
+        return got['product_code'], got.get('match_stage') or m.match_stage, True
+    code = (m.product_code or '').strip()
+    return code, m.match_stage, bool(code)
+
+
 @router.post('/records', status_code=201)
 def create_record(body: RecordIn):
     now = datetime.now().isoformat(timespec='seconds')
@@ -51,14 +66,15 @@ def create_record(body: RecordIn):
         )
         pid = cur.lastrowid
         for m in body.medicines:
+            code, stage, ok = _recheck(m)
             c.execute(
                 """INSERT INTO medicine
                    (prescription_id, product_code, name, dose_once, times_per_day,
                     total_days, usage, match_stage, matched, raw_text)
                    VALUES (?,?,?,?,?,?,?,?,?,?)""",
-                (pid, m.product_code, m.name, m.dose_once, m.times_per_day,
-                 m.total_days, m.usage, m.match_stage,
-                 int(m.matched), m.raw_text),
+                (pid, code, m.name, m.dose_once, m.times_per_day,
+                 m.total_days, m.usage, stage,
+                 int(ok), m.raw_text),
             )
     return {'id': pid}
 
