@@ -7,7 +7,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
-from app.core.config import BASE_DIR, UPLOAD_DIR
+from app.core.config import UPLOAD_DIR
 from app.models import db
 from app.schemas.record import RecordIn
 from app.services import period
@@ -25,11 +25,17 @@ async def analyze(file: UploadFile = File(...), source: str = Form('bag')):
     with path.open('wb') as f:
         shutil.copyfileobj(file.file, f)
 
-    texts, scores = run_ocr(str(path))
+    try:
+        texts, scores = run_ocr(str(path))
+    finally:
+        # 처방전 원본에는 환자 이름과 주민등록번호가 찍혀 있다.
+        # 분석에 쓴 뒤 바로 지우고 서버에 남기지 않는다.
+        path.unlink(missing_ok=True)
+
     medicines = match_all(texts)
 
     return {
-        'image_path': str(path.relative_to(BASE_DIR)),
+        'image_path': None,
         'source': source,
         'line_count': len(texts),
         **extract_meta(texts),
