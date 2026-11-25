@@ -276,3 +276,26 @@ def match_names(texts: list[str]) -> list[dict]:
             if cur[f] is None and r[f] is not None:
                 cur[f] = r[f]
     return list(merged.values())
+
+
+def match_all(texts):
+    """코드 매칭과 이름 매칭을 합친다.
+
+    처방전에 제품코드를 찍지 않는 양식이 많아 코드 매칭만으로는 0건이 나온다.
+    반대로 약봉투에는 코드가 아예 없다. 둘을 다 돌려 합치면 어느 쪽 사진이든
+    잡히므로, 문서 종류를 잘못 판단해도 결과가 비지 않는다.
+    같은 약이 양쪽에서 나오면 코드로 잡힌 쪽을 쓴다.
+    """
+    out, seen_code, seen_name = [], set(), set()
+    for m in list(match_codes(texts)) + list(match_names(texts)):
+        name = (m.get('name') or '').strip()
+        if not name:
+            continue
+        code = (m.get('product_code') or '').strip()
+        if (code and code in seen_code) or name in seen_name:
+            continue
+        if code:
+            seen_code.add(code)
+        seen_name.add(name)
+        out.append(m)
+    return out

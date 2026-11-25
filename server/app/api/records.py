@@ -11,7 +11,7 @@ from app.core.config import BASE_DIR, UPLOAD_DIR
 from app.models import db
 from app.schemas.record import RecordIn
 from app.services import period
-from app.services.match import match_codes, match_names, spec_of
+from app.services.match import match_all, match_names, spec_of
 from app.services.ocr import run_ocr
 from app.services.meta import extract_meta
 
@@ -26,7 +26,7 @@ async def analyze(file: UploadFile = File(...), source: str = Form('bag')):
         shutil.copyfileobj(file.file, f)
 
     texts, scores = run_ocr(str(path))
-    medicines = match_codes(texts) if source == 'prescription' else match_names(texts)
+    medicines = match_all(texts)
 
     return {
         'image_path': str(path.relative_to(BASE_DIR)),
